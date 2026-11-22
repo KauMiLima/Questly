@@ -1,5 +1,10 @@
 # Questly — lista de tarefas gamificada
 
+**[▶ Acesse o Questly online](https://questly-indol.vercel.app/)**
+
+![Tela do Questly com nível, barra de XP, streak e lista de tarefas](docs/questly.png)
+
+
 Lista de tarefas em React + Vite em que cada tarefa concluída vale XP. Você sobe de nível, mantém sequências de dias (streak) e desbloqueia conquistas.
 
 ## Como rodar
