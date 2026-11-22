@@ -1,0 +1,374 @@
+/* ===== Tema: painel de RPG à noite ===== */
+:root {
+  --fundo: #0e1330;
+  --fundo-2: #161d45;
+  --cartao: #1d2656;
+  --borda: #2c3878;
+  --texto: #eef1ff;
+  --texto-suave: #a3abd6;
+  --ouro: #ffc83d;
+  --xp: #3ddc84;
+  --perigo: #ff5d73;
+  --facil: #4fc1e9;
+  --media: #ffb347;
+  --dificil: #ff6b8b;
+  --raio: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 0%, #222c6b 0, transparent 45%),
+    radial-gradient(circle at 90% 100%, #1b3d5c 0, transparent 40%),
+    var(--fundo);
+  color: var(--texto);
+  font: 16px/1.5 'Fredoka', system-ui, sans-serif;
+}
+
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ouro); outline-offset: 2px; }
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+/* ----- Topo ----- */
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.logo {
+  margin: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 22px;
+  color: var(--ouro);
+  text-shadow: 3px 3px 0 #b3471f;
+}
+
+.abas { display: flex; gap: 6px; background: var(--fundo-2); padding: 4px; border-radius: 999px; }
+.abas button {
+  border: 0; background: none; color: var(--texto-suave);
+  padding: 8px 16px; border-radius: 999px; min-height: 40px;
+}
+.abas button.ativa { background: var(--cartao); color: var(--texto); }
+.contador {
+  display: inline-block; min-width: 22px; padding: 0 6px; margin-left: 4px;
+  background: var(--ouro); color: #2a1a00; border-radius: 999px; font-size: 13px; font-weight: 600;
+}
+
+/* ----- Painel do jogador ----- */
+.painel {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--cartao), var(--fundo-2));
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: 0 8px 0 #0a0e24;
+}
+.painel-bloco { margin-bottom: 24px; }
+
+.alerta {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+.alerta-risco { background: rgba(255, 140, 40, 0.16); color: #ffd2a1; border: 1px solid rgba(255, 140, 40, 0.4); }
+.alerta-perdido { background: rgba(255, 255, 255, 0.06); color: var(--texto-suave); }
+.stat-limite { color: #ffb3bf; background: rgba(255, 93, 115, 0.15); }
+
+.emblema {
+  flex: none;
+  width: 84px; height: 84px;
+  display: grid; place-items: center; align-content: center;
+  background: radial-gradient(circle at 35% 30%, #ffe58a, var(--ouro) 55%, #d9891a);
+  color: #3a2200;
+  border-radius: 50%;
+  border: 4px solid #fff3c4;
+  box-shadow: 0 0 0 4px #b36b12, 0 6px 18px rgba(255, 200, 61, 0.35);
+}
+.emblema-rotulo { font-family: 'Press Start 2P', monospace; font-size: 9px; }
+.emblema-numero { font-family: 'Press Start 2P', monospace; font-size: 26px; line-height: 1.1; }
+
+.painel-info { flex: 1; min-width: 0; }
+.painel-linha { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.titulo-nivel { font-size: 22px; }
+.xp-texto { color: var(--texto-suave); font-size: 14px; white-space: nowrap; }
+
+.barra {
+  height: 18px;
+  margin: 8px 0 12px;
+  background: #0a0e24;
+  border-radius: 999px;
+  border: 2px solid var(--borda);
+  overflow: hidden;
+}
+.barra-preenchida {
+  height: 100%;
+  background: repeating-linear-gradient(45deg, var(--xp) 0 12px, #2fc271 12px 24px);
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(.2, .9, .3, 1.2);
+}
+
+.stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.stat {
+  font-size: 14px; padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.06); border-radius: 999px; color: var(--texto-suave);
+}
+.stat-fogo { color: #ffd2a1; background: rgba(255, 120, 40, 0.16); }
+.stat em { font-style: normal; color: var(--ouro); }
+
+/* ----- Formulário ----- */
+.form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.form-input {
+  grid-column: 1 / -1;
+  width: 100%;
+  font: inherit; font-size: 16px;
+  padding: 14px 16px;
+  color: var(--texto);
+  background: var(--fundo-2);
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+}
+.form-input::placeholder { color: #6f78a8; }
+
+.dificuldades { display: flex; gap: 8px; flex-wrap: wrap; }
+.dif {
+  min-height: 44px; padding: 0 14px;
+  border-radius: 10px;
+  border: 2px solid var(--borda);
+  background: var(--fundo-2);
+  color: var(--texto-suave);
+}
+.dif small { opacity: 0.8; }
+.dif.selecionada { color: #10142e; font-weight: 600; }
+.dif-facil.selecionada { background: var(--facil); border-color: var(--facil); }
+.dif-media.selecionada { background: var(--media); border-color: var(--media); }
+.dif-dificil.selecionada { background: var(--dificil); border-color: var(--dificil); }
+
+.btn-adicionar {
+  min-height: 44px; padding: 0 22px;
+  border: 0; border-radius: 10px;
+  background: var(--ouro); color: #2a1a00; font-weight: 600;
+  box-shadow: 0 4px 0 #b36b12;
+  transition: transform 0.1s;
+}
+.btn-adicionar:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #b36b12; }
+.btn-adicionar:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ----- Lista ----- */
+.lista-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.filtros { display: flex; gap: 6px; }
+.filtro {
+  border: 0; background: none; color: var(--texto-suave);
+  padding: 6px 12px; border-radius: 8px; min-height: 36px;
+}
+.filtro.ativo { background: var(--fundo-2); color: var(--texto); }
+.pendentes { color: var(--texto-suave); font-size: 14px; }
+
+.itens { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--cartao);
+  border: 2px solid var(--borda);
+  border-radius: var(--raio);
+  animation: entrar 0.25s ease-out;
+}
+.item.concluida { opacity: 0.6; }
+.item.concluida .item-titulo { text-decoration: line-through; }
+
+.check {
+  flex: none;
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 2px solid var(--texto-suave);
+  background: transparent;
+  color: #10142e; font-weight: 700;
+}
+.check:hover { border-color: var(--xp); }
+.item.concluida .check { background: var(--xp); border-color: var(--xp); }
+
+.item-titulo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.item-editar {
+  flex: 1; min-width: 0; font: inherit; font-size: 16px;
+  padding: 4px 8px; color: var(--texto); background: var(--fundo-2);
+  border: 2px solid var(--ouro); border-radius: 8px;
+}
+
+.tag {
+  flex: none; font-size: 13px; padding: 3px 10px;
+  border-radius: 999px; white-space: nowrap; font-weight: 500;
+  color: #10142e;
+}
+.tag.dif-facil { background: var(--facil); }
+.tag.dif-media { background: var(--media); }
+.tag.dif-dificil { background: var(--dificil); }
+.item.concluida .tag { background: var(--xp); }
+
+.excluir {
+  flex: none; width: 36px; height: 36px;
+  border: 0; border-radius: 8px; background: none; color: var(--texto-suave);
+}
+.excluir:hover { color: var(--perigo); background: rgba(255, 93, 115, 0.12); }
+
+.vazio {
+  text-align: center; padding: 36px 16px;
+  color: var(--texto-suave);
+  border: 2px dashed var(--borda); border-radius: var(--raio);
+}
+
+.btn-limpar {
+  display: block; margin: 16px auto 0;
+  border: 0; background: none; color: var(--texto-suave); text-decoration: underline;
+  min-height: 40px;
+}
+
+/* ----- Conquistas ----- */
+.conquistas-resumo { color: var(--texto-suave); margin-top: 0; }
+.grade {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;
+}
+.medalha {
+  display: grid; justify-items: center; text-align: center; gap: 4px;
+  padding: 18px 12px;
+  background: var(--cartao); border: 2px solid var(--borda); border-radius: var(--raio);
+}
+.medalha-icone { font-size: 34px; }
+.medalha small { color: var(--texto-suave); font-size: 13px; }
+.medalha.ganha { border-color: var(--ouro); box-shadow: 0 0 18px rgba(255, 200, 61, 0.2); }
+.medalha.bloqueada { opacity: 0.45; filter: grayscale(1); }
+
+/* ----- Modal de level up ----- */
+.modal-fundo {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  background: rgba(5, 8, 25, 0.75);
+  padding: 16px;
+  z-index: 10;
+  animation: aparecer 0.2s ease-out;
+}
+.modal {
+  position: relative; overflow: hidden;
+  width: min(360px, 100%);
+  text-align: center;
+  padding: 32px 24px 24px;
+  background: linear-gradient(160deg, #2a357a, var(--fundo-2));
+  border: 3px solid var(--ouro);
+  border-radius: 20px;
+  animation: saltar 0.5s cubic-bezier(.2, .9, .3, 1.4);
+}
+.modal-sub { margin: 0; font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--ouro); }
+.modal-nivel {
+  font-family: 'Press Start 2P', monospace; font-size: 64px; line-height: 1.3;
+  color: #fff; text-shadow: 4px 4px 0 #b3471f;
+}
+.modal-titulo { font-size: 20px; margin: 0 0 20px; }
+
+.confete i {
+  position: absolute; top: -10px;
+  left: calc(var(--i) * 4.2%);
+  width: 8px; height: 14px;
+  background: hsl(calc(var(--i) * 47), 90%, 62%);
+  animation: cair 1.6s ease-in calc(var(--i) * 0.04s) forwards;
+}
+
+/* ----- Avisos (+XP) ----- */
+/* Avisos ficam no topo, por cima do cabeçalho, e não tapam a lista */
+.avisos {
+  position: fixed; left: 50%; top: 12px; transform: translateX(-50%);
+  width: min(420px, calc(100% - 24px));
+  display: grid; gap: 6px; justify-items: center;
+  z-index: 20; pointer-events: none;
+}
+.aviso {
+  padding: 8px 16px; border-radius: 999px;
+  font-weight: 600; font-size: 15px; text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  animation: descer 2.6s ease-out forwards;
+}
+.aviso-xp { background: var(--xp); color: #062b16; }
+.aviso-perda { background: var(--perigo); color: #2b0610; }
+.aviso-conquista { background: var(--ouro); color: #2a1a00; }
+.aviso-info { background: #dfe4ff; color: #141a40; }
+
+/* ----- Barra de desfazer ----- */
+.desfazer {
+  position: fixed; left: 0; right: 0; bottom: 16px; margin-inline: auto;
+  width: min(420px, calc(100% - 24px));
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 8px 8px 18px;
+  background: #eef1ff; color: #141a40;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 15;
+  animation: entrar 0.2s ease-out;
+}
+.desfazer button {
+  min-height: 40px; padding: 0 16px;
+  border: 0; border-radius: 8px;
+  background: #141a40; color: var(--ouro); font-weight: 600;
+}
+
+/* ----- Backup ----- */
+.backup {
+  margin-top: 40px; padding-top: 20px;
+  border-top: 1px solid var(--borda);
+  text-align: center;
+}
+.backup-botoes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.backup-botoes button:not(.btn-adicionar) {
+  min-height: 40px; padding: 0 14px;
+  background: var(--fundo-2); color: var(--texto);
+  border: 1px solid var(--borda); border-radius: 10px;
+}
+.backup-dica { color: var(--texto-suave); font-size: 14px; margin: 10px 0 0; }
+.backup .modal .backup-dica { margin-bottom: 20px; }
+.backup-erro { color: var(--perigo); font-size: 14px; margin: 8px 0 0; }
+
+/* ----- Animações ----- */
+@keyframes entrar { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes aparecer { from { opacity: 0; } }
+@keyframes saltar { from { transform: scale(0.6); opacity: 0; } }
+@keyframes cair { to { transform: translateY(420px) rotate(540deg); opacity: 0; } }
+@keyframes descer {
+  0% { opacity: 0; transform: translateY(-10px); }
+  12%, 80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ----- Celular ----- */
+@media (max-width: 520px) {
+  .painel { flex-direction: column; text-align: center; }
+  .painel-linha, .stats { justify-content: center; }
+  .form { grid-template-columns: 1fr; }
+  .dificuldades .dif { flex: 1; }
+  .item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 6px; }
+  .check { grid-row: 1 / span 2; align-self: start; }
+  .item-titulo, .item-editar { grid-column: 2; grid-row: 1; }
+  .tag { grid-column: 2; grid-row: 2; justify-self: start; }
+  .excluir { grid-column: 3; grid-row: 1 / span 2; align-self: start; }
+}
