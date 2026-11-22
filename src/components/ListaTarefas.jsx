@@ -23,6 +23,9 @@ export default function ListaTarefas({ tarefas, onAlternar, onEditar, onExcluir,
 
   return (
     <section className="lista">
+      <div className="secao-topo">
+        <h2 className="secao-titulo">Tarefas</h2>
+      </div>
       <div className="lista-topo">
         <div className="filtros">
           {FILTROS.map((f) => (

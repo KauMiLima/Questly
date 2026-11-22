@@ -1,21 +1,16 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import {
-  DIFICULDADES,
   JOGADOR_INICIAL,
   LIMITE_XP_DIARIO,
-  atualizarStreak,
-  bonusStreak,
-  calcularNivel,
-  conquistasPerdidas,
   ehHoje,
   hoje,
-  novasConquistas,
-  reverterStreakSePreciso,
-  xpDeHoje,
+  registrarConclusao,
+  registrarDesmarcacao,
 } from './game/regras'
 import PainelJogador from './components/PainelJogador'
 import FormTarefa from './components/FormTarefa'
+import ListaHabitos from './components/ListaHabitos'
 import ListaTarefas from './components/ListaTarefas'
 import Conquistas from './components/Conquistas'
 import LevelUp from './components/LevelUp'
@@ -24,9 +19,11 @@ import Desfazer from './components/Desfazer'
 import BackupProgresso from './components/BackupProgresso'
 
 const TEMPO_DESFAZER = 6000
+const maisNovoPrimeiro = (a, b) => (b.criadaEm ?? b.criadoEm) - (a.criadaEm ?? a.criadoEm)
 
 export default function App() {
   const [tarefas, setTarefas] = useLocalStorage('missoes:tarefas', [])
+  const [habitos, setHabitos] = useLocalStorage('missoes:habitos', [])
   const [jogadorSalvo, setJogador] = useLocalStorage('missoes:jogador', JOGADOR_INICIAL)
   // Garante que dados salvos por uma versão antiga do app tenham os campos novos
   const jogador = { ...JOGADOR_INICIAL, ...jogadorSalvo }
@@ -38,151 +35,191 @@ export default function App() {
   const proximoAviso = useRef(1)
   const timerDesfazer = useRef(null)
 
+  // Se o app ficar aberto na virada do dia, redesenha para os hábitos "renovarem"
+  const [, setDiaAtual] = useState(hoje())
+  useEffect(() => {
+    const id = setInterval(() => setDiaAtual(hoje()), 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
+
   function avisar(texto, tipo = 'xp') {
     const id = proximoAviso.current++
     setAvisos((lista) => [...lista, { id, texto, tipo }])
     setTimeout(() => setAvisos((lista) => lista.filter((a) => a.id !== id)), 2600)
   }
 
-  // ---------- Criar / editar ----------
+  // ---------- Mensagens de ganho/perda (iguais para tarefas e hábitos) ----------
 
-  function adicionarTarefa(titulo, dificuldade) {
-    const nova = {
-      id: crypto.randomUUID(),
-      titulo,
-      dificuldade,
-      concluida: false,
-      xpGanho: 0,
-      contou: false,
-      criadaEm: Date.now(),
-      concluidaEm: null,
+  function anunciarConclusao(r) {
+    if (r.ganho === 0) {
+      avisar(`Limite de ${LIMITE_XP_DIARIO} XP de hoje atingido. Volte amanhã!`, 'info')
+    } else if (r.ganho < r.xpCheio) {
+      avisar(`+${r.ganho} XP (limite diário atingido)`)
+    } else {
+      avisar(r.bonus > 0 ? `+${r.ganho} XP (bônus de streak!)` : `+${r.ganho} XP`)
     }
-    setTarefas([nova, ...tarefas])
+    r.desbloqueadas.forEach((c) => avisar(`${c.icone} Conquista: ${c.nome}`, 'conquista'))
+    if (r.subiuPara) setLevelUp(r.subiuPara)
   }
+
+  function anunciarDesmarcacao(xpGanho, perdidas) {
+    if (xpGanho > 0) avisar(`-${xpGanho} XP`, 'perda')
+    perdidas.forEach((c) => avisar(`Conquista perdida: ${c.nome}`, 'perda'))
+  }
+
+  // Ainda sobrou alguma coisa feita hoje? (para saber se o streak do dia continua)
+  function temAlgoFeitoHoje(listaTarefas, listaHabitos) {
+    return (
+      listaTarefas.some((t) => t.concluida && ehHoje(t.concluidaEm)) ||
+      listaHabitos.some((h) => h.historico[hoje()] !== undefined)
+    )
+  }
+
+  // ---------- Criar ----------
+
+  function adicionar({ titulo, dificuldade, repeticao, dias }) {
+    if (repeticao === 'unica') {
+      const nova = {
+        id: crypto.randomUUID(),
+        titulo,
+        dificuldade,
+        concluida: false,
+        xpGanho: 0,
+        contou: false,
+        criadaEm: Date.now(),
+        concluidaEm: null,
+      }
+      setTarefas([nova, ...tarefas])
+    } else {
+      const novo = {
+        id: crypto.randomUUID(),
+        titulo,
+        dificuldade,
+        repeticao, // 'diaria' | 'semanal'
+        dias, // 0 = domingo ... 6 = sábado (usado só no 'semanal')
+        historico: {}, // { 'AAAA-MM-DD': { xp, contou } }
+        criadoEm: Date.now(),
+      }
+      setHabitos([novo, ...habitos])
+      avisar('Hábito criado!', 'info')
+    }
+  }
+
+  // ---------- Tarefas únicas ----------
 
   function editarTarefa(id, titulo) {
     setTarefas(tarefas.map((t) => (t.id === id ? { ...t, titulo } : t)))
   }
 
-  // ---------- Concluir / desmarcar ----------
-
-  function concluir(tarefa) {
-    let j = atualizarStreak(jogador)
-    const bonus = bonusStreak(j.streak)
-    const xpCheio = Math.round(DIFICULDADES[tarefa.dificuldade].xp * (1 + bonus))
-    const restanteHoje = Math.max(0, LIMITE_XP_DIARIO - xpDeHoje(jogador))
-    const ganho = Math.min(xpCheio, restanteHoje)
-    // Só conta para as conquistas se a tarefa deu XP (senão daria para farmar medalhas)
-    const contou = ganho > 0
-    const nivelAntes = calcularNivel(jogador.xp).nivel
-
-    j = {
-      ...j,
-      xp: j.xp + ganho,
-      xpHoje: { dia: hoje(), valor: xpDeHoje(jogador) + ganho },
-      totalConcluidas: j.totalConcluidas + (contou ? 1 : 0),
-      dificeisConcluidas: j.dificeisConcluidas + (contou && tarefa.dificuldade === 'dificil' ? 1 : 0),
-    }
-
-    const desbloqueadas = novasConquistas(j)
-    j = { ...j, conquistas: [...j.conquistas, ...desbloqueadas.map((c) => c.id)] }
-
-    setJogador(j)
-    setTarefas(
-      tarefas.map((t) =>
-        t.id === tarefa.id
-          ? { ...t, concluida: true, xpGanho: ganho, contou, concluidaEm: Date.now() }
-          : t
-      )
-    )
-
-    if (ganho === 0) {
-      avisar(`Limite de ${LIMITE_XP_DIARIO} XP de hoje atingido. Volte amanhã!`, 'info')
-    } else if (ganho < xpCheio) {
-      avisar(`+${ganho} XP (limite diário atingido)`)
-    } else {
-      avisar(bonus > 0 ? `+${ganho} XP (bônus de streak!)` : `+${ganho} XP`)
-    }
-    desbloqueadas.forEach((c) => avisar(`${c.icone} Conquista: ${c.nome}`, 'conquista'))
-
-    const nivelDepois = calcularNivel(j.xp).nivel
-    if (nivelDepois > nivelAntes) setLevelUp(nivelDepois)
-  }
-
-  function desmarcar(tarefa) {
-    const novasTarefas = tarefas.map((t) =>
-      t.id === tarefa.id ? { ...t, concluida: false, xpGanho: 0, contou: false, concluidaEm: null } : t
-    )
-    const foiHoje = ehHoje(tarefa.concluidaEm)
-    // Tarefas antigas (de antes desta versão) não têm "contou": nelas, qualquer XP contava
-    const contou = tarefa.contou ?? tarefa.xpGanho > 0
-
-    let j = {
-      ...jogador,
-      xp: Math.max(0, jogador.xp - tarefa.xpGanho),
-      xpHoje: foiHoje
-        ? { dia: hoje(), valor: Math.max(0, xpDeHoje(jogador) - tarefa.xpGanho) }
-        : jogador.xpHoje,
-      totalConcluidas: Math.max(0, jogador.totalConcluidas - (contou ? 1 : 0)),
-      dificeisConcluidas: Math.max(
-        0,
-        jogador.dificeisConcluidas - (contou && tarefa.dificuldade === 'dificil' ? 1 : 0)
-      ),
-    }
-
-    const aindaTemHoje = novasTarefas.some((t) => t.concluida && ehHoje(t.concluidaEm))
-    j = reverterStreakSePreciso(j, aindaTemHoje)
-
-    const perdidas = conquistasPerdidas(j)
-    j = { ...j, conquistas: j.conquistas.filter((id) => !perdidas.some((c) => c.id === id)) }
-
-    setJogador(j)
-    setTarefas(novasTarefas)
-    if (tarefa.xpGanho > 0) avisar(`-${tarefa.xpGanho} XP`, 'perda')
-    perdidas.forEach((c) => avisar(`Conquista perdida: ${c.nome}`, 'perda'))
-  }
-
   function alternarTarefa(id) {
     const tarefa = tarefas.find((t) => t.id === id)
     if (!tarefa) return
-    if (tarefa.concluida) desmarcar(tarefa)
-    else concluir(tarefa)
+
+    if (!tarefa.concluida) {
+      const r = registrarConclusao(jogador, tarefa.dificuldade)
+      setJogador(r.jogador)
+      setTarefas(
+        tarefas.map((t) =>
+          t.id === id ? { ...t, concluida: true, xpGanho: r.ganho, contou: r.contou, concluidaEm: Date.now() } : t
+        )
+      )
+      anunciarConclusao(r)
+    } else {
+      const novasTarefas = tarefas.map((t) =>
+        t.id === id ? { ...t, concluida: false, xpGanho: 0, contou: false, concluidaEm: null } : t
+      )
+      const { jogador: j, perdidas } = registrarDesmarcacao(
+        jogador,
+        {
+          xpGanho: tarefa.xpGanho,
+          // Tarefas antigas (de antes do limite diário) não têm "contou"
+          contou: tarefa.contou ?? tarefa.xpGanho > 0,
+          dificuldade: tarefa.dificuldade,
+          foiHoje: ehHoje(tarefa.concluidaEm),
+        },
+        temAlgoFeitoHoje(novasTarefas, habitos)
+      )
+      setJogador(j)
+      setTarefas(novasTarefas)
+      anunciarDesmarcacao(tarefa.xpGanho, perdidas)
+    }
+  }
+
+  // ---------- Hábitos ----------
+
+  function editarHabito(id, titulo) {
+    setHabitos(habitos.map((h) => (h.id === id ? { ...h, titulo } : h)))
+  }
+
+  function alternarHabito(id) {
+    const habito = habitos.find((h) => h.id === id)
+    if (!habito) return
+    const dia = hoje()
+    const registro = habito.historico[dia]
+
+    if (registro === undefined) {
+      const r = registrarConclusao(jogador, habito.dificuldade, { ehHabito: true })
+      setJogador(r.jogador)
+      setHabitos(
+        habitos.map((h) =>
+          h.id === id ? { ...h, historico: { ...h.historico, [dia]: { xp: r.ganho, contou: r.contou } } } : h
+        )
+      )
+      anunciarConclusao(r)
+    } else {
+      const { [dia]: _removido, ...historicoSemHoje } = habito.historico
+      const novosHabitos = habitos.map((h) => (h.id === id ? { ...h, historico: historicoSemHoje } : h))
+      const { jogador: j, perdidas } = registrarDesmarcacao(
+        jogador,
+        { xpGanho: registro.xp, contou: registro.contou, dificuldade: habito.dificuldade, foiHoje: true, ehHabito: true },
+        temAlgoFeitoHoje(tarefas, novosHabitos)
+      )
+      setJogador(j)
+      setHabitos(novosHabitos)
+      anunciarDesmarcacao(registro.xp, perdidas)
+    }
   }
 
   // ---------- Excluir com opção de desfazer ----------
+  // Excluir algo já concluído não tira o XP ganho (o limite diário impede abusos).
 
-  function removerComDesfazer(removidas, texto) {
-    if (removidas.length === 0) return
-    const ids = new Set(removidas.map((t) => t.id))
-    setTarefas(tarefas.filter((t) => !ids.has(t.id)))
+  function removerComDesfazer(tipo, removidos, texto) {
+    if (removidos.length === 0) return
+    const ids = new Set(removidos.map((x) => x.id))
+    if (tipo === 'tarefas') setTarefas(tarefas.filter((t) => !ids.has(t.id)))
+    else setHabitos(habitos.filter((h) => !ids.has(h.id)))
 
     clearTimeout(timerDesfazer.current)
     // Se havia um "desfazer" anterior pendente, ele é descartado (a exclusão fica valendo)
-    setDesfazer({ texto, removidas })
+    setDesfazer({ tipo, texto, removidos })
     timerDesfazer.current = setTimeout(() => setDesfazer(null), TEMPO_DESFAZER)
   }
 
   function excluirTarefa(id) {
-    // Excluir uma tarefa concluída não tira o XP já ganho
-    // (o limite diário é o que impede abusar disso).
     const tarefa = tarefas.find((t) => t.id === id)
-    if (tarefa) removerComDesfazer([tarefa], 'Tarefa excluída')
+    if (tarefa) removerComDesfazer('tarefas', [tarefa], 'Tarefa excluída')
   }
 
   function limparConcluidas() {
     const concluidas = tarefas.filter((t) => t.concluida)
     removerComDesfazer(
+      'tarefas',
       concluidas,
       `${concluidas.length} ${concluidas.length === 1 ? 'tarefa removida' : 'tarefas removidas'}`
     )
   }
 
+  function excluirHabito(id) {
+    const habito = habitos.find((h) => h.id === id)
+    if (habito) removerComDesfazer('habitos', [habito], 'Hábito excluído')
+  }
+
   function desfazerExclusao() {
     if (!desfazer) return
     clearTimeout(timerDesfazer.current)
-    // Junta de volta e reordena da mais nova para a mais antiga
-    const restauradas = [...desfazer.removidas, ...tarefas].sort((a, b) => b.criadaEm - a.criadaEm)
-    setTarefas(restauradas)
+    // Junta de volta e reordena do mais novo para o mais antigo
+    if (desfazer.tipo === 'tarefas') setTarefas([...desfazer.removidos, ...tarefas].sort(maisNovoPrimeiro))
+    else setHabitos([...desfazer.removidos, ...habitos].sort(maisNovoPrimeiro))
     setDesfazer(null)
   }
 
@@ -190,6 +227,7 @@ export default function App() {
 
   function importarProgresso(dados) {
     setTarefas(dados.tarefas)
+    setHabitos(dados.habitos ?? [])
     setJogador({ ...JOGADOR_INICIAL, ...dados.jogador })
     setDesfazer(null)
     avisar('Progresso importado!', 'info')
@@ -213,7 +251,13 @@ export default function App() {
 
       {aba === 'tarefas' ? (
         <main>
-          <FormTarefa onAdicionar={adicionarTarefa} />
+          <FormTarefa onAdicionar={adicionar} />
+          <ListaHabitos
+            habitos={habitos}
+            onAlternar={alternarHabito}
+            onEditar={editarHabito}
+            onExcluir={excluirHabito}
+          />
           <ListaTarefas
             tarefas={tarefas}
             onAlternar={alternarTarefa}
@@ -226,7 +270,7 @@ export default function App() {
         <Conquistas desbloqueadas={jogador.conquistas} />
       )}
 
-      <BackupProgresso tarefas={tarefas} jogador={jogador} onImportar={importarProgresso} />
+      <BackupProgresso tarefas={tarefas} habitos={habitos} jogador={jogador} onImportar={importarProgresso} />
 
       {levelUp && <LevelUp nivel={levelUp} onFechar={() => setLevelUp(null)} />}
       <Avisos avisos={avisos} />

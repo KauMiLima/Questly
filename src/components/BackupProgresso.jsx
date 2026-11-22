@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react'
 import { hoje, validarBackup } from '../game/regras'
 
-export default function BackupProgresso({ tarefas, jogador, onImportar }) {
+export default function BackupProgresso({ tarefas, habitos, jogador, onImportar }) {
   const inputArquivo = useRef(null)
   const [pendente, setPendente] = useState(null) // backup lido, esperando confirmação
   const [erro, setErro] = useState('')
 
   function exportar() {
-    const dados = { versao: 1, exportadoEm: new Date().toISOString(), tarefas, jogador }
+    const dados = { versao: 2, exportadoEm: new Date().toISOString(), tarefas, habitos, jogador }
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -53,8 +53,8 @@ export default function BackupProgresso({ tarefas, jogador, onImportar }) {
           <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <p className="modal-titulo">Importar este backup?</p>
             <p className="backup-dica">
-              {pendente.tarefas.length} tarefas e {pendente.jogador.xp} XP. Isso substitui todo o
-              progresso atual.
+              {pendente.tarefas.length} tarefas, {(pendente.habitos ?? []).length} hábitos e{' '}
+              {pendente.jogador.xp} XP. Isso substitui todo o progresso atual.
             </p>
             <div className="backup-botoes">
               <button onClick={() => setPendente(null)}>Cancelar</button>

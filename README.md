@@ -29,7 +29,8 @@ Para gerar a versão de produção: `npm run build` (o resultado vai para a past
 - **Níveis:** para sair do nível N para o N+1 são necessários `N × 100` XP.
 - **Títulos:** Novato (1), Aprendiz (3), Aventureiro (5), Veterano (8), Mestre (12), Lenda (20).
 - **Streak:** dias seguidos com pelo menos uma tarefa concluída. Dá +10% de XP a partir de 3 dias e +25% a partir de 7.
-- **Conquistas:** 8 medalhas (primeira tarefa, 10 e 50 tarefas, 5 difíceis, streaks de 3 e 7 dias, níveis 5 e 10).
+- **Hábitos (tarefas recorrentes):** ao criar, escolha *Uma vez*, *Todo dia* ou *Alguns dias* (dias da semana). Os hábitos do dia aparecem em "Hábitos de hoje" e se renovam à meia-noite. Cada hábito tem a própria sequência (🔥), contada só nos dias programados.
+- **Conquistas:** 10 medalhas (primeira tarefa, 10 e 50 tarefas, primeiro hábito, 30 hábitos, 5 difíceis, streaks de 3 e 7 dias, níveis 5 e 10).
 - **Limite diário:** no máximo 400 XP por dia (`LIMITE_XP_DIARIO` em `regras.js`). Tarefas concluídas depois disso não dão XP nem contam para conquistas.
 - **Desmarcar desfaz tudo:** devolve o XP, desconta do limite do dia, remove conquistas que deixaram de valer e, se era a única tarefa do dia, devolve o streak ao que era antes.
 - **Avisos de streak:** o painel avisa quando o streak está em risco (última atividade ontem) e quando foi perdido.
@@ -47,7 +48,9 @@ src/
 ├── hooks/useLocalStorage.js # useState que salva no navegador
 └── components/
     ├── PainelJogador.jsx    # nível, barra de XP e streak
-    ├── FormTarefa.jsx       # criar tarefa e escolher dificuldade
+    ├── FormTarefa.jsx       # criar tarefa ou hábito (dificuldade e repetição)
+    ├── ListaHabitos.jsx     # "Hábitos de hoje" e "Outros dias"
+    ├── ItemHabito.jsx       # um hábito (cumprir hoje, sequência, editar, excluir)
     ├── ListaTarefas.jsx     # filtros e lista
     ├── ItemTarefa.jsx       # uma tarefa (concluir, editar, excluir)
     ├── Conquistas.jsx       # grade de medalhas
