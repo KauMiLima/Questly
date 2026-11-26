@@ -16,7 +16,7 @@ export default function LevelUp({ nivel, onFechar }) {
             <i key={i} style={{ '--i': i }} />
           ))}
         </div>
-        <p className="modal-sub">LEVEL UP!</p>
+        <p className="modal-sub">Subiu de nível!</p>
         <div className="modal-nivel">{nivel}</div>
         <p className="modal-titulo">
           {tituloDoNivel(nivel) !== tituloDoNivel(nivel - 1)

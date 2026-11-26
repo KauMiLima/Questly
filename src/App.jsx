@@ -14,6 +14,7 @@ import {
 import { formatarTempo, usePomodoro } from './hooks/usePomodoro'
 import { useAuth } from './hooks/useAuth'
 import { useSincronizacao } from './hooks/useSincronizacao'
+import { TEMAS, useTema } from './hooks/useTema'
 import PainelJogador from './components/PainelJogador'
 import FormTarefa from './components/FormTarefa'
 import ListaHabitos from './components/ListaHabitos'
@@ -45,6 +46,7 @@ export default function App() {
 
   // ---------- Conta e sincronização com o Supabase ----------
   const auth = useAuth()
+  const { tema, trocarTema } = useTema()
 
   function aplicarDados({ tarefas: t, habitos: h, jogador: j }) {
     setTarefas(t)
@@ -304,7 +306,12 @@ export default function App() {
     <div className="app">
       <header className="topo">
         <h1 className="logo">Questly</h1>
-        <Conta auth={auth} status={sinc.status} pendente={sinc.pendente} onSair={sair} />
+        <div className="topo-acoes">
+          <button className="btn-tema" onClick={trocarTema} aria-label={TEMAS[tema].rotulo} title={TEMAS[tema].rotulo}>
+            {TEMAS[tema].icone}
+          </button>
+          <Conta auth={auth} status={sinc.status} pendente={sinc.pendente} onSair={sair} />
+        </div>
         <nav className="abas">
           <button className={aba === 'tarefas' ? 'ativa' : ''} onClick={() => setAba('tarefas')}>
             Tarefas

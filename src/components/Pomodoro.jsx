@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { FASES, formatarTempo } from '../hooks/usePomodoro'
 import { OPCOES_POMODORO, focosDeHoje } from '../game/regras'
 
-const RAIO = 120
-const CIRCUNFERENCIA = 2 * Math.PI * RAIO
 
 function formatarMinutos(total) {
   const h = Math.floor(total / 60)
@@ -51,18 +49,8 @@ export default function Pomodoro({
         ))}
       </div>
 
-      <div className="relogio">
-        <svg viewBox="0 0 280 280" className="anel" aria-hidden="true">
-          <circle className="anel-fundo" cx="140" cy="140" r={RAIO} />
-          <circle
-            className="anel-progresso"
-            cx="140"
-            cy="140"
-            r={RAIO}
-            strokeDasharray={CIRCUNFERENCIA}
-            strokeDashoffset={CIRCUNFERENCIA * (1 - progresso)}
-          />
-        </svg>
+      {/* O anel de progresso é desenhado no CSS a partir de --progresso (0 a 1) */}
+      <div className="relogio" style={{ '--progresso': progresso }}>
         <div className="relogio-centro">
           <span className="relogio-fase">{FASES[fase].rotulo}</span>
           <span className="relogio-tempo" role="timer" aria-live="off">
