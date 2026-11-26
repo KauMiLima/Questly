@@ -66,6 +66,76 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ouro); outl
   background: var(--ouro); color: #2a1a00; border-radius: 999px; font-size: 13px; font-weight: 600;
 }
 
+/* ----- Conta (login e sincronização) ----- */
+.topo .logo { order: 0; }
+.topo .abas { order: 1; margin-left: auto; }
+.topo .conta { order: 2; }
+.conta { position: relative; }
+
+.btn-entrar {
+  min-height: 44px; padding: 0 18px;
+  border: 2px solid var(--ouro); border-radius: 999px;
+  background: none; color: var(--ouro); font-weight: 600;
+}
+.btn-entrar:hover { background: rgba(255, 200, 61, 0.12); }
+
+.btn-conta {
+  position: relative;
+  width: 44px; height: 44px; padding: 0;
+  border: 2px solid var(--borda); border-radius: 50%;
+  background: var(--cartao); color: var(--texto);
+}
+.conta-avatar { font-weight: 700; font-size: 18px; }
+.conta-status {
+  position: absolute; right: -4px; bottom: -4px;
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  border-radius: 50%; font-size: 12px; line-height: 1;
+  background: var(--xp); color: #062b16; border: 2px solid var(--fundo);
+}
+.btn-conta.status-salvando .conta-status,
+.btn-conta.status-carregando .conta-status { background: var(--facil); animation: girar 1s linear infinite; }
+.btn-conta.status-erro .conta-status { background: var(--media); color: #2a1a00; }
+
+.conta-menu {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: min(300px, calc(100vw - 32px));
+  padding: 16px;
+  background: var(--cartao); border: 2px solid var(--borda); border-radius: var(--raio);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  z-index: 12;
+  animation: entrar 0.15s ease-out;
+}
+.conta-email { margin: 0 0 6px; font-weight: 600; overflow-wrap: anywhere; }
+.conta-sinc { margin: 0 0 12px; font-size: 14px; color: var(--texto-suave); }
+.conta-sinc.status-sincronizado { color: var(--xp); }
+.conta-sinc.status-erro { color: #ffd2a1; }
+.conta-aviso { margin: 0 0 12px; font-size: 14px; color: #ffb3bf; }
+.btn-sair {
+  width: 100%; min-height: 44px;
+  border: 1px solid var(--borda); border-radius: 10px;
+  background: var(--fundo-2); color: var(--texto);
+}
+.btn-sair:hover { border-color: var(--perigo); color: #ffb3bf; }
+
+.modal-login { text-align: left; }
+.form-login { display: grid; gap: 14px; }
+.form-login .modal-titulo, .modal-login .modal-titulo { margin: 0; }
+.form-login .backup-dica { margin: 0; }
+.campo { display: grid; gap: 6px; font-size: 14px; color: var(--texto-suave); }
+.campo input {
+  font: inherit; font-size: 16px; color: var(--texto);
+  min-height: 48px; padding: 0 14px;
+  background: var(--fundo-2); border: 2px solid var(--borda); border-radius: 10px;
+}
+.campo input:focus { border-color: var(--ouro); }
+.form-login .btn-adicionar { width: 100%; }
+.btn-trocar-modo {
+  min-height: 40px; border: 0; background: none;
+  color: var(--texto-suave); text-decoration: underline;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+
 /* ----- Painel do jogador ----- */
 .painel {
   display: flex;
@@ -490,7 +560,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ouro); outl
   .dificuldades .dif, .repeticoes .rep { flex: 1; padding: 0 6px; }
   .dias-semana { justify-content: space-between; }
   .dia { width: 40px; height: 40px; }
-  .abas { width: 100%; }
+  .topo .conta { order: 1; margin-left: auto; }
+  .topo .abas { order: 2; width: 100%; margin-left: 0; }
   .abas button { flex: 1; padding: 8px 6px; font-size: 15px; white-space: nowrap; }
   .fase { padding: 0 12px; font-size: 15px; }
   .pomodoro-stats dd { font-size: 18px; }

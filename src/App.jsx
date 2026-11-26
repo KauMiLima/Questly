@@ -12,6 +12,8 @@ import {
   registrarPomodoro,
 } from './game/regras'
 import { formatarTempo, usePomodoro } from './hooks/usePomodoro'
+import { useAuth } from './hooks/useAuth'
+import { useSincronizacao } from './hooks/useSincronizacao'
 import PainelJogador from './components/PainelJogador'
 import FormTarefa from './components/FormTarefa'
 import ListaHabitos from './components/ListaHabitos'
@@ -22,6 +24,7 @@ import Avisos from './components/Avisos'
 import Desfazer from './components/Desfazer'
 import BackupProgresso from './components/BackupProgresso'
 import Pomodoro from './components/Pomodoro'
+import Conta from './components/Conta'
 
 const TEMPO_DESFAZER = 6000
 const maisNovoPrimeiro = (a, b) => (b.criadaEm ?? b.criadoEm) - (a.criadaEm ?? a.criadoEm)
@@ -39,6 +42,28 @@ export default function App() {
   const [desfazer, setDesfazer] = useState(null)
   const proximoAviso = useRef(1)
   const timerDesfazer = useRef(null)
+
+  // ---------- Conta e sincronização com o Supabase ----------
+  const auth = useAuth()
+
+  function aplicarDados({ tarefas: t, habitos: h, jogador: j }) {
+    setTarefas(t)
+    setHabitos(h)
+    setJogador({ ...JOGADOR_INICIAL, ...(j ?? {}) })
+  }
+
+  const sinc = useSincronizacao(auth.usuario, { tarefas, habitos, jogador }, aplicarDados)
+
+  async function sair() {
+    await auth.sair()
+    // Este navegador volta ao modo visitante, começando do zero
+    sinc.esquecerConta()
+    aplicarDados({ tarefas: [], habitos: [], jogador: null })
+    setDesfazer(null)
+    setSugestao(null)
+    setFocandoEm(null)
+    avisar('Você saiu da conta.', 'info')
+  }
 
   // ---------- Pomodoro ----------
   const [configSalva, setConfigPomodoro] = useLocalStorage('questly:pomodoro-config', CONFIG_POMODORO_INICIAL)
@@ -279,6 +304,7 @@ export default function App() {
     <div className="app">
       <header className="topo">
         <h1 className="logo">Questly</h1>
+        <Conta auth={auth} status={sinc.status} pendente={sinc.pendente} onSair={sair} />
         <nav className="abas">
           <button className={aba === 'tarefas' ? 'ativa' : ''} onClick={() => setAba('tarefas')}>
             Tarefas
@@ -328,7 +354,7 @@ export default function App() {
         <Conquistas desbloqueadas={jogador.conquistas} />
       )}
 
-      <BackupProgresso tarefas={tarefas} habitos={habitos} jogador={jogador} onImportar={importarProgresso} />
+      <BackupProgresso tarefas={tarefas} habitos={habitos} jogador={jogador} logado={Boolean(auth.usuario)} onImportar={importarProgresso} />
 
       {levelUp && <LevelUp nivel={levelUp} onFechar={() => setLevelUp(null)} />}
       <Avisos avisos={avisos} />

@@ -18,6 +18,24 @@ Depois abra o endereço que aparecer no terminal (normalmente http://localhost:5
 
 Para gerar a versão de produção: `npm run build` (o resultado vai para a pasta `dist/`).
 
+## Conta e nuvem (Supabase)
+
+O Questly funciona sem conta (modo visitante, salvo no navegador). Com login por e-mail e senha, tarefas, hábitos e progresso ficam no **Supabase** e aparecem em qualquer aparelho:
+
+- No primeiro login, o progresso do navegador sobe para a conta.
+- Cada mudança é enviada sozinha, só o que mudou.
+- Sem internet, o app continua funcionando e envia as mudanças quando a conexão volta.
+- Cada usuário só acessa os próprios dados (Row Level Security).
+
+### Configurar
+
+1. Crie um projeto no [Supabase](https://supabase.com/dashboard) e rode o arquivo `supabase/schema.sql` no **SQL Editor**.
+2. Copie `.env.example` para `.env.local` e preencha com a URL e a publishable key do projeto (**Project Settings → API Keys**).
+3. Na Vercel, adicione as mesmas duas variáveis em **Settings → Environment Variables**.
+4. No Supabase, em **Authentication → URL Configuration**, coloque a URL do site em **Site URL** e `http://localhost:5173` em **Redirect URLs**.
+
+Sem as variáveis de ambiente, o app funciona normalmente, só sem login.
+
 ## Regras do jogo
 
 | Dificuldade | XP  |
@@ -48,6 +66,10 @@ src/
 ├── game/regras.js           # XP, níveis, streak e conquistas (sem React)
 ├── hooks/useLocalStorage.js # useState que salva no navegador
 ├── hooks/usePomodoro.js     # lógica do timer do Pomodoro
+├── hooks/useAuth.js         # login, cadastro e sessão (Supabase Auth)
+├── hooks/useSincronizacao.js # mantém os dados locais iguais aos do Supabase
+├── lib/supabase.js          # cliente do Supabase
+├── lib/banco.js             # leitura/escrita nas tabelas e cálculo do que mudou
 └── components/
     ├── PainelJogador.jsx    # nível, barra de XP e streak
     ├── FormTarefa.jsx       # criar tarefa ou hábito (dificuldade e repetição)
@@ -56,6 +78,7 @@ src/
     ├── ListaTarefas.jsx     # filtros e lista
     ├── ItemTarefa.jsx       # uma tarefa (concluir, editar, excluir)
     ├── Conquistas.jsx       # grade de medalhas
+    ├── Conta.jsx            # botão Entrar, login/cadastro e menu da conta
     ├── Pomodoro.jsx         # aba Foco: timer, fases, estatísticas e configurações
     ├── LevelUp.jsx          # modal de subida de nível
     ├── Avisos.jsx           # notificações "+25 XP" (no topo, até 3 por vez)

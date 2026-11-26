@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { hoje, validarBackup } from '../game/regras'
 
-export default function BackupProgresso({ tarefas, habitos, jogador, onImportar }) {
+export default function BackupProgresso({ tarefas, habitos, jogador, logado, onImportar }) {
   const inputArquivo = useRef(null)
   const [pendente, setPendente] = useState(null) // backup lido, esperando confirmação
   const [erro, setErro] = useState('')
@@ -44,7 +44,9 @@ export default function BackupProgresso({ tarefas, habitos, jogador, onImportar 
         <input ref={inputArquivo} type="file" accept="application/json,.json" hidden onChange={lerArquivo} />
       </div>
       <p className="backup-dica">
-        Seu progresso fica salvo só neste navegador. Exporte de vez em quando para não perder.
+        {logado
+          ? 'Seu progresso está salvo na sua conta. O backup em arquivo é opcional.'
+          : 'Sem conta, seu progresso fica salvo só neste navegador. Entre ou exporte de vez em quando para não perder.'}
       </p>
       {erro && <p className="backup-erro">{erro}</p>}
 
