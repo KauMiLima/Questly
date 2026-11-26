@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import {
+  CONFIG_POMODORO_INICIAL,
   JOGADOR_INICIAL,
   LIMITE_XP_DIARIO,
   ehHoje,
+  habitoNoDia,
   hoje,
   registrarConclusao,
   registrarDesmarcacao,
+  registrarPomodoro,
 } from './game/regras'
+import { formatarTempo, usePomodoro } from './hooks/usePomodoro'
 import PainelJogador from './components/PainelJogador'
 import FormTarefa from './components/FormTarefa'
 import ListaHabitos from './components/ListaHabitos'
@@ -17,6 +21,7 @@ import LevelUp from './components/LevelUp'
 import Avisos from './components/Avisos'
 import Desfazer from './components/Desfazer'
 import BackupProgresso from './components/BackupProgresso'
+import Pomodoro from './components/Pomodoro'
 
 const TEMPO_DESFAZER = 6000
 const maisNovoPrimeiro = (a, b) => (b.criadaEm ?? b.criadoEm) - (a.criadaEm ?? a.criadoEm)
@@ -34,6 +39,43 @@ export default function App() {
   const [desfazer, setDesfazer] = useState(null)
   const proximoAviso = useRef(1)
   const timerDesfazer = useRef(null)
+
+  // ---------- Pomodoro ----------
+  const [configSalva, setConfigPomodoro] = useLocalStorage('questly:pomodoro-config', CONFIG_POMODORO_INICIAL)
+  const configPomodoro = { ...CONFIG_POMODORO_INICIAL, ...configSalva }
+  // Item em que você está focando: 'tarefa:<id>' ou 'habito:<id>'
+  const [focandoEm, setFocandoEm] = useLocalStorage('questly:focando-em', null)
+  const [sugestao, setSugestao] = useState(null)
+
+  const timer = usePomodoro(configPomodoro, (minutos) => {
+    // O Pomodoro não dá XP: só registra as estatísticas de foco
+    setJogador(registrarPomodoro(jogador, minutos))
+    avisar('⏱️ Foco concluído! Hora da pausa.', 'info')
+
+    const item = opcoesFoco.find((o) => o.chave === focandoEm)
+    if (item) setSugestao(item)
+  })
+
+  // Tarefas pendentes e hábitos de hoje ainda não feitos, para escolher no Pomodoro
+  const opcoesFoco = [
+    ...habitos
+      .filter((h) => habitoNoDia(h) && h.historico[hoje()] === undefined)
+      .map((h) => ({ chave: `habito:${h.id}`, titulo: h.titulo, tipo: 'habito' })),
+    ...tarefas
+      .filter((t) => !t.concluida)
+      .map((t) => ({ chave: `tarefa:${t.id}`, titulo: t.titulo, tipo: 'tarefa' })),
+  ]
+
+  function concluirSugestao() {
+    const [tipo, id] = sugestao.chave.split(':')
+    // Só marca se ainda estiver pendente (pode ter sido feita em outra aba)
+    if (opcoesFoco.some((o) => o.chave === sugestao.chave)) {
+      if (tipo === 'tarefa') alternarTarefa(id)
+      else alternarHabito(id)
+    }
+    setSugestao(null)
+    setFocandoEm(null)
+  }
 
   // Se o app ficar aberto na virada do dia, redesenha para os hábitos "renovarem"
   const [, setDiaAtual] = useState(hoje())
@@ -241,6 +283,9 @@ export default function App() {
           <button className={aba === 'tarefas' ? 'ativa' : ''} onClick={() => setAba('tarefas')}>
             Tarefas
           </button>
+          <button className={aba === 'foco' ? 'ativa' : ''} onClick={() => setAba('foco')}>
+            {timer.rodando && aba !== 'foco' ? `⏱ ${formatarTempo(timer.restanteMs)}` : 'Foco'}
+          </button>
           <button className={aba === 'conquistas' ? 'ativa' : ''} onClick={() => setAba('conquistas')}>
             Conquistas <span className="contador">{jogador.conquistas.length}</span>
           </button>
@@ -266,6 +311,19 @@ export default function App() {
             onLimparConcluidas={limparConcluidas}
           />
         </main>
+      ) : aba === 'foco' ? (
+        <Pomodoro
+          timer={timer}
+          config={configPomodoro}
+          onMudarConfig={(mudanca) => setConfigPomodoro({ ...configPomodoro, ...mudanca })}
+          jogador={jogador}
+          opcoesFoco={opcoesFoco}
+          focandoEm={focandoEm}
+          onFocarEm={setFocandoEm}
+          sugestao={sugestao}
+          onConcluirSugestao={concluirSugestao}
+          onDispensarSugestao={() => setSugestao(null)}
+        />
       ) : (
         <Conquistas desbloqueadas={jogador.conquistas} />
       )}

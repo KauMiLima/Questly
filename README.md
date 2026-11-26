@@ -30,6 +30,7 @@ Para gerar a versão de produção: `npm run build` (o resultado vai para a past
 - **Títulos:** Novato (1), Aprendiz (3), Aventureiro (5), Veterano (8), Mestre (12), Lenda (20).
 - **Streak:** dias seguidos com pelo menos uma tarefa concluída. Dá +10% de XP a partir de 3 dias e +25% a partir de 7.
 - **Hábitos (tarefas recorrentes):** ao criar, escolha *Uma vez*, *Todo dia* ou *Alguns dias* (dias da semana). Os hábitos do dia aparecem em "Hábitos de hoje" e se renovam à meia-noite. Cada hábito tem a própria sequência (🔥), contada só nos dias programados.
+- **Modo Pomodoro (aba Foco):** timer de foco (15, 25 ou 50 min) com pausas curtas e uma pausa longa a cada 4 focos. Dá para escolher em qual tarefa ou hábito você está focando e marcá-lo como feito quando o foco acaba. O Pomodoro **não dá XP**: é só uma estratégia de foco. O XP vem de concluir a tarefa. O tempo continua certo com a aba em segundo plano ou recarregada, aparece no título da aba e pode tocar um som ou mostrar uma notificação no fim.
 - **Conquistas:** 10 medalhas (primeira tarefa, 10 e 50 tarefas, primeiro hábito, 30 hábitos, 5 difíceis, streaks de 3 e 7 dias, níveis 5 e 10).
 - **Limite diário:** no máximo 400 XP por dia (`LIMITE_XP_DIARIO` em `regras.js`). Tarefas concluídas depois disso não dão XP nem contam para conquistas.
 - **Desmarcar desfaz tudo:** devolve o XP, desconta do limite do dia, remove conquistas que deixaram de valer e, se era a única tarefa do dia, devolve o streak ao que era antes.
@@ -46,6 +47,7 @@ src/
 ├── index.css                # estilos (tema RPG)
 ├── game/regras.js           # XP, níveis, streak e conquistas (sem React)
 ├── hooks/useLocalStorage.js # useState que salva no navegador
+├── hooks/usePomodoro.js     # lógica do timer do Pomodoro
 └── components/
     ├── PainelJogador.jsx    # nível, barra de XP e streak
     ├── FormTarefa.jsx       # criar tarefa ou hábito (dificuldade e repetição)
@@ -54,6 +56,7 @@ src/
     ├── ListaTarefas.jsx     # filtros e lista
     ├── ItemTarefa.jsx       # uma tarefa (concluir, editar, excluir)
     ├── Conquistas.jsx       # grade de medalhas
+    ├── Pomodoro.jsx         # aba Foco: timer, fases, estatísticas e configurações
     ├── LevelUp.jsx          # modal de subida de nível
     ├── Avisos.jsx           # notificações "+25 XP" (no topo, até 3 por vez)
     ├── Desfazer.jsx         # barra "Tarefa excluída · Desfazer"

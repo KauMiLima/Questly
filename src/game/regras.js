@@ -18,6 +18,9 @@ export const JOGADOR_INICIAL = {
   totalConcluidas: 0,
   dificeisConcluidas: 0,
   habitosFeitos: 0,
+  pomodoros: 0, // focos completos (só estatística, não dá XP)
+  minutosFoco: 0,
+  focosHoje: { dia: null, valor: 0 },
   conquistas: [],
   xpHoje: { dia: null, valor: 0 },
   // Como o streak estava antes da primeira tarefa do dia.
@@ -175,12 +178,13 @@ export function conquistasPerdidas(jogador) {
 // ---------- Ganhar e perder XP ----------
 // Usado tanto por tarefas quanto por hábitos.
 
-// Concluir algo: atualiza streak, XP (respeitando o limite diário),
-// contadores e conquistas. Não mexe no React: só calcula o novo jogador.
-export function registrarConclusao(jogador, dificuldade, { ehHabito = false } = {}) {
+// Base de tudo que dá XP: atualiza o streak, aplica o bônus e o limite diário
+// e checa conquistas. "contadores" recebe (jogador, contou) e devolve os
+// campos que devem mudar (ex.: totalConcluidas). Não mexe no React.
+function ganharXp(jogador, xpBase, contadores) {
   let j = atualizarStreak(jogador)
   const bonus = bonusStreak(j.streak)
-  const xpCheio = Math.round(DIFICULDADES[dificuldade].xp * (1 + bonus))
+  const xpCheio = Math.round(xpBase * (1 + bonus))
   const restanteHoje = Math.max(0, LIMITE_XP_DIARIO - xpDeHoje(jogador))
   const ganho = Math.min(xpCheio, restanteHoje)
   // Só conta para as conquistas se deu XP (senão daria para farmar medalhas)
@@ -190,9 +194,7 @@ export function registrarConclusao(jogador, dificuldade, { ehHabito = false } = 
     ...j,
     xp: j.xp + ganho,
     xpHoje: { dia: hoje(), valor: xpDeHoje(jogador) + ganho },
-    totalConcluidas: j.totalConcluidas + (contou ? 1 : 0),
-    dificeisConcluidas: j.dificeisConcluidas + (contou && dificuldade === 'dificil' ? 1 : 0),
-    habitosFeitos: j.habitosFeitos + (contou && ehHabito ? 1 : 0),
+    ...contadores(j, contou),
   }
 
   const desbloqueadas = novasConquistas(j)
@@ -209,6 +211,49 @@ export function registrarConclusao(jogador, dificuldade, { ehHabito = false } = 
     contou,
     desbloqueadas,
     subiuPara: nivelDepois > nivelAntes ? nivelDepois : null,
+  }
+}
+
+// Concluir uma tarefa ou hábito.
+export function registrarConclusao(jogador, dificuldade, { ehHabito = false } = {}) {
+  return ganharXp(jogador, DIFICULDADES[dificuldade].xp, (j, contou) => ({
+    totalConcluidas: j.totalConcluidas + (contou ? 1 : 0),
+    dificeisConcluidas: j.dificeisConcluidas + (contou && dificuldade === 'dificil' ? 1 : 0),
+    habitosFeitos: j.habitosFeitos + (contou && ehHabito ? 1 : 0),
+  }))
+}
+
+// ---------- Pomodoro ----------
+// O Pomodoro é só uma ferramenta de foco: não dá XP, não conta para o streak
+// nem para conquistas. O XP vem de concluir a tarefa em que você focou.
+
+// Opções de duração (minutos)
+export const OPCOES_POMODORO = {
+  foco: [15, 25, 50],
+  curta: [5, 10],
+  longa: [15, 20, 30],
+}
+
+export const CONFIG_POMODORO_INICIAL = {
+  foco: 25,
+  curta: 5,
+  longa: 15,
+  autoIniciar: false,
+  som: true,
+  notificar: false,
+}
+
+export function focosDeHoje(jogador) {
+  return jogador.focosHoje?.dia === hoje() ? jogador.focosHoje.valor : 0
+}
+
+// Um foco chegou ao fim: só atualiza as estatísticas.
+export function registrarPomodoro(jogador, minutos) {
+  return {
+    ...jogador,
+    pomodoros: jogador.pomodoros + 1,
+    minutosFoco: jogador.minutosFoco + minutos,
+    focosHoje: { dia: hoje(), valor: focosDeHoje(jogador) + 1 },
   }
 }
 
