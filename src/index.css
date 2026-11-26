@@ -591,6 +591,35 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .ciclo i { width: 10px; height: 10px; transform: rotate(45deg); border: 1px solid var(--borda); background: var(--campo); }
 .ciclo i.cheio { background: var(--ouro); }
 
+.tempo-foco { width: 100%; display: grid; justify-items: center; gap: 8px; }
+.tempo-foco-rotulo { font-family: var(--titulo); font-size: 14px; font-weight: 700; letter-spacing: 1px; color: var(--titulo-cor); text-transform: uppercase; }
+.tempo-foco-dica { font-size: 14px; color: var(--texto-suave); font-style: italic; }
+.tempos { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.tempo {
+  min-height: 42px; padding: 0 14px;
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--borda-fraca);
+  border-radius: 999px;
+  background: var(--cartao);
+  color: var(--texto-suave);
+  font-weight: 700;
+}
+.tempo:hover:not(:disabled) { border-color: var(--borda); color: var(--texto); }
+.tempo.selecionado { background: var(--cor-fase); border-color: transparent; color: #fff; }
+.tempo:disabled { opacity: 0.5; cursor: not-allowed; }
+.tempo-outro { padding: 0 12px 0 6px; cursor: text; }
+.tempo-outro input {
+  width: 52px; min-height: 32px; padding: 0 4px;
+  border: 0; border-radius: 999px;
+  background: transparent; color: inherit;
+  font: inherit; font-size: 16px; text-align: center;
+  -moz-appearance: textfield;
+}
+.tempo-outro input::placeholder { color: inherit; opacity: 0.8; }
+.tempo-outro input::-webkit-inner-spin-button, .tempo-outro input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.tempo-outro input:focus { outline: none; background: color-mix(in srgb, var(--campo) 70%, transparent); color: var(--texto); }
+.tempo-outro:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
+
 .controles { display: flex; align-items: center; gap: 16px; }
 .ctrl-principal { min-width: 170px; min-height: 54px; font-size: 17px; }
 .ctrl-secundario {

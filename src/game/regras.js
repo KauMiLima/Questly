@@ -229,10 +229,14 @@ export function registrarConclusao(jogador, dificuldade, { ehHabito = false } = 
 
 // Opções de duração (minutos)
 export const OPCOES_POMODORO = {
-  foco: [15, 25, 50],
+  foco: [15, 25, 45, 60, 90], // atalhos; dá para digitar outro valor
   curta: [5, 10],
   longa: [15, 20, 30],
 }
+
+// Limites para o tempo de foco digitado à mão (minutos)
+export const FOCO_MINIMO = 1
+export const FOCO_MAXIMO = 180
 
 export const CONFIG_POMODORO_INICIAL = {
   foco: 25,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FASES, formatarTempo } from '../hooks/usePomodoro'
-import { OPCOES_POMODORO, focosDeHoje } from '../game/regras'
+import { FOCO_MAXIMO, FOCO_MINIMO, OPCOES_POMODORO, focosDeHoje } from '../game/regras'
 
 
 function formatarMinutos(total) {
@@ -23,6 +23,24 @@ export default function Pomodoro({
 }) {
   const [mostrarConfig, setMostrarConfig] = useState(false)
   const { fase, rodando, ciclo, focosAtePausaLonga, restanteMs, progresso } = timer
+  // Tempo digitado à mão (texto, para dar para apagar e digitar de novo)
+  const [tempoDigitado, setTempoDigitado] = useState('')
+  const ehAtalho = OPCOES_POMODORO.foco.includes(config.foco)
+  // Só dá para trocar o tempo antes de começar o foco
+  const podeEscolherTempo = fase === 'foco' && !rodando && progresso === 0
+
+  function escolherTempo(minutos) {
+    setTempoDigitado('')
+    onMudarConfig({ foco: minutos })
+  }
+
+  function aplicarTempoDigitado() {
+    const minutos = Math.round(Number(tempoDigitado))
+    if (!tempoDigitado || Number.isNaN(minutos)) return setTempoDigitado('')
+    const limitado = Math.min(FOCO_MAXIMO, Math.max(FOCO_MINIMO, minutos))
+    onMudarConfig({ foco: limitado })
+    setTempoDigitado('')
+  }
   const itemFocado = opcoesFoco.find((o) => o.chave === focandoEm)
 
   function mudarNotificacao(ligar) {
@@ -63,6 +81,47 @@ export default function Pomodoro({
           </span>
         </div>
       </div>
+
+      {fase === 'foco' && (
+        <div className="tempo-foco">
+          <span className="tempo-foco-rotulo">Tempo de foco</span>
+          <div className="tempos" role="radiogroup" aria-label="Tempo de foco">
+            {OPCOES_POMODORO.foco.map((min) => (
+              <button
+                key={min}
+                type="button"
+                role="radio"
+                aria-checked={config.foco === min}
+                className={config.foco === min ? 'tempo selecionado' : 'tempo'}
+                disabled={!podeEscolherTempo}
+                onClick={() => escolherTempo(min)}
+              >
+                {min} min
+              </button>
+            ))}
+            <label className={!ehAtalho ? 'tempo tempo-outro selecionado' : 'tempo tempo-outro'}>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={String(FOCO_MAXIMO).length}
+                placeholder={!ehAtalho ? String(config.foco) : 'Outro'}
+                value={tempoDigitado}
+                disabled={!podeEscolherTempo}
+                aria-label={`Outro tempo em minutos (de ${FOCO_MINIMO} a ${FOCO_MAXIMO})`}
+                // Só números, com no máximo 3 dígitos (o limite é 180 min)
+                onChange={(e) => setTempoDigitado(e.target.value.replace(/\D/g, '').slice(0, String(FOCO_MAXIMO).length))}
+                onBlur={aplicarTempoDigitado}
+                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+              />
+              <span>min</span>
+            </label>
+          </div>
+          {!podeEscolherTempo && (
+            <span className="tempo-foco-dica">Para mudar o tempo, reinicie o timer (↺).</span>
+          )}
+        </div>
+      )}
 
       <div className="controles">
         <button className="ctrl-secundario" onClick={timer.reiniciar} aria-label="Reiniciar">
@@ -152,7 +211,6 @@ export default function Pomodoro({
       {mostrarConfig && (
         <div className="pomodoro-config">
           {[
-            ['foco', 'Foco'],
             ['curta', 'Pausa curta'],
             ['longa', 'Pausa longa'],
           ].map(([chave, rotulo]) => (
